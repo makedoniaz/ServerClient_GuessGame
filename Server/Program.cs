@@ -1,5 +1,7 @@
-﻿using Server.Services;
+﻿using Shared.Tcp.Client;
+using Shared.Tcp.Server;
 using System;
+using System.Linq.Expressions;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -9,9 +11,9 @@ public class Program
     static string ip = "127.0.0.1";
     static ushort port = 8000;
 
-    private static async Task Main()
+    private static void Main()
     {
-        var tcpServer = new TcpServer(ip, port);
+        var tcpServer = new MyTcpServer(ip, port);
 
         var randNumGenerator = new Random();
         int numToGuess = randNumGenerator.Next(0, 101);
@@ -22,31 +24,38 @@ public class Program
         while (true)
         {
             var clientSocket = tcpServer.AcceptClient();
-            Console.WriteLine($"{clientSocket.RemoteEndPoint} connected");
+            Console.WriteLine($"{clientSocket} connected");
             Console.WriteLine($"Number to guess: {numToGuess}");
 
-            ThreadPool.QueueUserWorkItem(async (socket) =>
+
+            ThreadPool.QueueUserWorkItem<MyTcpClient>(async (socket) =>
             {
-                var rules = "I came up with a number between 0 and 100.\nYour goal to guess this number withing 5 tries...\n";
-                TcpServer.SendMessage(socket, rules);
-
-                while (true)
+                try
                 {
-                    var buffer = new byte[1024];
-                    socket.Receive(buffer);
+                    var rules = "I came up with a number between 0 and 100.\nYour goal to guess this number withing 5 tries...\n";
+                    socket.SendMessage(rules);
 
-                    int.TryParse(Encoding.UTF8.GetString(buffer), out int resNum);
-
-                    Console.WriteLine(resNum);
-
-                    if (resNum == numToGuess)
+                    while (true)
                     {
-                        await TcpServer.SendMessageAsync(socket, "You won!");
-                        break;
-                    }
+                        var numStr = socket.ReceiveMessage();
 
-                    else
-                        await TcpServer.SendMessageAsync(socket, "Wrong answer!");
+                        int.TryParse(numStr, out int resNum);
+
+                        Console.WriteLine(resNum);
+
+                        if (resNum == numToGuess)
+                        {
+                            await socket.SendMessageAsync("You won!");
+                            break;
+                        }
+
+                        else
+                            await socket.SendMessageAsync("Wrong answer!");
+                    }
+                }
+                catch (SocketException ex)
+                {
+                    Console.WriteLine($"{socket} disconnected");
                 }
             }, clientSocket, false);
         }

@@ -1,35 +1,28 @@
-﻿using System.Net.Sockets;
+﻿using Shared.Tcp.Client;
+using System.Net.Sockets;
 using System.Text;
 
 public class Program
 {
     static string ip = "127.0.0.1";
-    static short port = 8000;
+    static ushort port = 8000;
 
     private static void Main()
     {
-        var clientSocket = new Socket(
-            addressFamily: AddressFamily.InterNetwork,
-            socketType: SocketType.Stream,
-            protocolType: ProtocolType.Tcp
-        );
+        var client = new MyTcpClient();
 
-        clientSocket.Connect(ip, port);
+        client.Connect(ip, port);
 
-        byte[] buffer = new byte[1024];
-        clientSocket.Receive(buffer);
-
-        Console.WriteLine(Encoding.UTF8.GetString(buffer));
+        var rulesStr = client.ReceiveMessage();
+        Console.WriteLine(rulesStr);
 
         while (true)
         {
             var num = Console.ReadLine();
-            clientSocket.SendAsync(Encoding.UTF8.GetBytes(num));
+            client.SendMessageAsync(num);
 
-            Array.Clear(buffer);
-            clientSocket.Receive(buffer);
-
-            Console.WriteLine(Encoding.UTF8.GetString(buffer));
+            var response = client.ReceiveMessage();
+            Console.WriteLine(response);
         }
     }
 }
