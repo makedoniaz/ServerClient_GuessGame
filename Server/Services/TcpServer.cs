@@ -35,7 +35,7 @@ public class TcpServer
 
     public Socket AcceptClient() => _socket.Accept();
 
-    public void SendMessage(Socket receiver, string message) => receiver.Send(Encoding.UTF8.GetBytes(message));
+    static public void SendMessage(Socket receiver, string message) => receiver.Send(Encoding.UTF8.GetBytes(message));
 
-    public void SendMessageAsync(Socket receiver, string message) => receiver.SendAsync(Encoding.UTF8.GetBytes(message));
+    static public Task<int> SendMessageAsync(Socket receiver, string message) => receiver.SendAsync(Encoding.UTF8.GetBytes(message));
 }

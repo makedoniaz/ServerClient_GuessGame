@@ -24,7 +24,7 @@ public class Program
         while (true)
         {
             var num = Console.ReadLine();
-            clientSocket.Send(Encoding.UTF8.GetBytes(num));
+            clientSocket.SendAsync(Encoding.UTF8.GetBytes(num));
 
             Array.Clear(buffer);
             clientSocket.Receive(buffer);

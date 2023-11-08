@@ -9,7 +9,7 @@ public class Program
     static string ip = "127.0.0.1";
     static ushort port = 8000;
 
-    private static void Main()
+    private static async Task Main()
     {
         var tcpServer = new TcpServer(ip, port);
 
@@ -19,28 +19,36 @@ public class Program
         tcpServer.OpenConnection();
         Console.WriteLine($"Server started on {ip}:{port}");
 
-        var clientSocket = tcpServer.AcceptClient();
-        Console.WriteLine($"{clientSocket.RemoteEndPoint} connected");
-        Console.WriteLine($"Number to guess: {numToGuess}");
-
-        var rules = "I came up with a number between 0 and 100.\nYour goal to guess this number withing 5 tries...\n";
-        tcpServer.SendMessage(clientSocket, rules);
-
         while (true)
         {
-            var buffer = new byte[1024];
-            clientSocket.Receive(buffer);
+            var clientSocket = tcpServer.AcceptClient();
+            Console.WriteLine($"{clientSocket.RemoteEndPoint} connected");
+            Console.WriteLine($"Number to guess: {numToGuess}");
 
-            int.TryParse(Encoding.UTF8.GetString(buffer), out int resNum);
-
-            if (resNum == numToGuess)
+            ThreadPool.QueueUserWorkItem(async (socket) =>
             {
-                clientSocket.Send(Encoding.UTF8.GetBytes("You won!"));
-                break;
-            }
+                var rules = "I came up with a number between 0 and 100.\nYour goal to guess this number withing 5 tries...\n";
+                TcpServer.SendMessage(socket, rules);
 
-            else
-                clientSocket.Send(Encoding.UTF8.GetBytes("Wrong answer!"));
+                while (true)
+                {
+                    var buffer = new byte[1024];
+                    socket.Receive(buffer);
+
+                    int.TryParse(Encoding.UTF8.GetString(buffer), out int resNum);
+
+                    Console.WriteLine(resNum);
+
+                    if (resNum == numToGuess)
+                    {
+                        await TcpServer.SendMessageAsync(socket, "You won!");
+                        break;
+                    }
+
+                    else
+                        await TcpServer.SendMessageAsync(socket, "Wrong answer!");
+                }
+            }, clientSocket, false);
         }
     }
 }
