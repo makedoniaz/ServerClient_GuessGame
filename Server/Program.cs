@@ -25,11 +25,13 @@ public class Program
         {
             var clientSocket = tcpServer.AcceptClient();
             Console.WriteLine($"{clientSocket} connected");
-            Console.WriteLine($"Number to guess: {numToGuess}");
 
 
             ThreadPool.QueueUserWorkItem<MyTcpClient>(async (socket) =>
             {
+                int numToGuess = randNumGenerator.Next(0, 101);
+                Console.WriteLine($"{clientSocket} number to guess: {numToGuess}");
+
                 try
                 {
                     var rules = "I came up with a number between 0 and 100.\nYour goal to guess this number withing 5 tries...\n";

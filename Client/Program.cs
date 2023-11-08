@@ -7,7 +7,7 @@ public class Program
     static string ip = "127.0.0.1";
     static ushort port = 8000;
 
-    private static void Main()
+    private static async Task Main()
     {
         var client = new MyTcpClient();
 
@@ -19,7 +19,7 @@ public class Program
         while (true)
         {
             var num = Console.ReadLine();
-            client.SendMessageAsync(num);
+            await client.SendMessageAsync(num);
 
             var response = client.ReceiveMessage();
             Console.WriteLine(response);

@@ -28,7 +28,6 @@ public class MyTcpClient : TcpConnection
         return Encoding.UTF8.GetString(buffer);
     }
 
-
     public override string ToString()
     {
         return $"{_socket.RemoteEndPoint}";

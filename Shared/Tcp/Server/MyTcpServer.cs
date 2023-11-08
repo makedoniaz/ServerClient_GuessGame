@@ -13,6 +13,7 @@ namespace Shared.Tcp.Server;
 public class MyTcpServer : TcpConnection, IDisposable
 {
     private IPEndPoint _endpoint;
+    private IEnumerable<MyTcpClient> _clients;
 
     public EndPoint EndPoint => _endpoint;
 
@@ -20,6 +21,8 @@ public class MyTcpServer : TcpConnection, IDisposable
     {
         var adress = IPAddress.Parse(ip);
         _endpoint = new IPEndPoint(adress, port);
+
+        _clients = new List<MyTcpClient>();
     }
 
     public void OpenConnection(int backlog = 5)
