@@ -15,14 +15,20 @@ public class Program
 
         var rulesStr = client.ReceiveMessage();
         Console.WriteLine(rulesStr);
-
-        while (true)
+        try
         {
-            var num = Console.ReadLine();
-            await client.SendMessageAsync(num);
+            while (true)
+            {
+                var num = Console.ReadLine();
+                await client.SendMessageAsync(num);
 
-            var response = client.ReceiveMessage();
-            Console.WriteLine(response);
+                var response = client.ReceiveMessage();
+                Console.WriteLine(response);
+            }
+        }
+        catch (SocketException)
+        {
+            Console.WriteLine($"{ip}:{port} connection lost");
         }
     }
 }
