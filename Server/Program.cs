@@ -17,9 +17,13 @@ public class Program
         var adress = IPAddress.Parse(ip);
         var endpoint = new IPEndPoint(adress, port);
 
+
         socket.Bind(endpoint);
         socket.Listen(backlog: 5);
+        Console.WriteLine($"Server started on {ip}:{port}");
 
-        socket.Accept();
+        var clientSocket = socket.Accept();
+
+        Console.WriteLine($"{clientSocket.RemoteEndPoint} connected");
     }
 }
