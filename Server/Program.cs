@@ -1,4 +1,6 @@
 ﻿using Shared.Tcp.Client;
+using Shared.Tcp.ConnectionStatus;
+using Shared.Tcp.Message;
 using Shared.Tcp.Server;
 using System;
 using System.Linq.Expressions;
@@ -10,6 +12,8 @@ public class Program
 {
     static string ip = "127.0.0.1";
     static ushort port = 8000;
+
+    static uint amountOfTries = 5;
 
     private static void Main()
     {
@@ -27,7 +31,7 @@ public class Program
             Console.WriteLine($"{clientSocket} connected");
 
 
-            ThreadPool.QueueUserWorkItem<MyTcpClient>(async (socket) =>
+            ThreadPool.QueueUserWorkItem<MyTcpClient>((socket) =>
             {
                 int numToGuess = randNumGenerator.Next(0, 101);
                 Console.WriteLine($"{clientSocket} number to guess: {numToGuess}");
@@ -35,25 +39,29 @@ public class Program
                 try
                 {
                     var rules = "I came up with a number between 0 and 100.\nYour goal to guess this number withing 5 tries...\n";
-                    socket.SendMessage(rules);
-
+                    socket.SendMessage(new MessageWithConnectionStatus(rules, TcpConnectionStatus.ConnectionProceeds));
                     while (true)
                     {
-                        var numStr = socket.ReceiveMessage();
+                        var response = socket.ReceiveMessage();
 
-                        int.TryParse(numStr, out int resNum);
+                        int.TryParse(response.Text, out int resNum);
 
-                        Console.WriteLine(resNum);
+                        Console.WriteLine($"{socket}: {resNum}");
 
                         if (resNum == numToGuess)
                         {
-                            await socket.SendMessageAsync("You won!");
+                            socket.SendMessage(new MessageWithConnectionStatus("You won!", TcpConnectionStatus.ConnectionEnded));
                             break;
                         }
-
+                        else if (amountOfTries == 0)
+                            socket.SendMessage(new MessageWithConnectionStatus("You lost!", TcpConnectionStatus.ConnectionEnded));
                         else
-                            await socket.SendMessageAsync("Wrong answer!");
+                            socket.SendMessage(new MessageWithConnectionStatus("Wrong answer!", TcpConnectionStatus.ConnectionProceeds));
+
+                        amountOfTries--;
                     }
+
+                    Console.WriteLine($"{socket} disconnected from server!");
                 }
                 catch (SocketException ex)
                 {

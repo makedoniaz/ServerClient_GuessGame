@@ -1,4 +1,6 @@
 ﻿using Shared.Tcp.Client;
+using Shared.Tcp.ConnectionStatus;
+using Shared.Tcp.Message;
 using System.Net.Sockets;
 using System.Text;
 
@@ -13,17 +15,20 @@ public class Program
 
         client.Connect(ip, port);
 
-        var rulesStr = client.ReceiveMessage();
-        Console.WriteLine(rulesStr);
+        var rulesMsg = client.ReceiveMessage();
+        Console.WriteLine(rulesMsg.Text);
         try
         {
             while (true)
             {
                 var num = Console.ReadLine();
-                await client.SendMessageAsync(num);
+                client.SendMessage(new MessageWithConnectionStatus(num, TcpConnectionStatus.ConnectionProceeds));
 
                 var response = client.ReceiveMessage();
-                Console.WriteLine(response);
+                Console.WriteLine(response.Text);
+
+                if (response.Status == TcpConnectionStatus.ConnectionEnded)
+                    Environment.Exit(0);
             }
         }
         catch (SocketException)
